@@ -20,82 +20,101 @@ async function fetchPage(url) {
 }
 
 /**
- * Scrape Storiavoce
- * Invités : après "avec" dans le contenu
- * Description : depuis <meta property="og:description"> ou <meta property="twitter:description">
+ * Scrape Storiavoce depuis Spotify
+ * Colonnes: Titre, Auteur (invités), Date de parution, Source, Description, Lien
  */
 export async function scrapeStoriavoce() {
   try {
-    console.log('Scraping Storiavoce...');
-    const html = await fetchPage('https://storiavoce.com/');
+    console.log('Scraping Storiavoce from Spotify...');
+    const showUrl = 'https://open.spotify.com/show/3q09jBiYIJ1NGnAMYuDQeH';
+    const html = await fetchPage(showUrl);
     const $ = cheerio.load(html);
     const episodes = [];
 
-    // Find episode links
-    const episodeLinks = [];
-    $('article a, .episode a, .podcast-item a, a[href*="/podcast/"]').each((i, el) => {
-      let href = $(el).attr('href');
-      if (href && !episodeLinks.includes(href)) {
-        if (!href.startsWith('http') && !href.startsWith('//')) {
-          href = 'https://storiavoce.com' + href;
+    // Try to extract JSON data from Spotify's embedded data
+    let jsonData = null;
+    $('script[type="application/ld+json"]').each((i, el) => {
+      try {
+        const content = $(el).html();
+        const data = JSON.parse(content);
+        if (data && data['@type'] === 'PodcastSeries') {
+          jsonData = data;
         }
-        episodeLinks.push(href);
+      } catch (e) {
+        // Ignore parse errors
       }
     });
 
-    console.log(`  Found ${episodeLinks.length} episodes to check`);
-
-    // Check each episode
-    for (const link of episodeLinks.slice(0, 15)) {
-      try {
-        await delay(500);
-
-        const epHtml = await fetchPage(link);
-        const $ep = cheerio.load(epHtml);
-
-        const title = $ep('h1').first().text().trim();
-
-        // Extract description from meta tags
-        let description = $ep('meta[property="og:description"]').attr('content') ||
-                         $ep('meta[property="twitter:description"]').attr('content') || '';
-        description = description.trim();
-
-        // Extract guests: search for "avec" in full page content
-        let guests = '';
-        const pageText = $ep('body').text();
-        const guestMatch = pageText.match(/avec\s+([^.!?\n]+)/i);
-        if (guestMatch) {
-          guests = guestMatch[1].trim()
-            .replace(/\s+/g, ' ')
-            .split(/\s*,\s*et\s*|\s*et\s*|\s*,\s*/)[0];
+    // Try to extract from Next.js data
+    $('script').each((i, el) => {
+      const content = $(el).html();
+      if (content && content.includes('__NEXT_DATA__')) {
+        try {
+          const match = content.match(/__NEXT_DATA__\s*=\s*({.+?})\s*<\/script>/);
+          if (match) {
+            const data = JSON.parse(match[1]);
+            // Navigate through Spotify's data structure
+            if (data.props && data.props.pageProps) {
+              jsonData = data.props.pageProps;
+            }
+          }
+        } catch (e) {
+          // Ignore parse errors
         }
-
-        // Extract date
-        let pubDate = null;
-        $ep('time, .date, .published, [class*="date"]').each((i, el) => {
-          const dateText = $ep(el).attr('datetime') || $ep(el).text();
-          pubDate = extractDateFromText(dateText);
-        });
-
-        if (!pubDate) {
-          pubDate = extractDateFromText(pageText);
-        }
-
-        // Only keep episodes from last 2 weeks
-        if (pubDate && isWithinWeeks(pubDate, 2)) {
-          episodes.push({
-            title,
-            author: guests || 'Invité non spécifié',
-            date: pubDate,
-            source: 'Storiavoce',
-            description: description.slice(0, 300),
-            url: link,
-            type: 'podcast'
-          });
-        }
-      } catch (err) {
-        console.error(`  Error fetching episode ${link}:`, err.message);
       }
+    });
+
+    // If we have JSON data with episodes
+    if (jsonData && jsonData.episodes) {
+      for (const ep of jsonData.episodes.slice(0, 20)) {
+        try {
+          const title = ep.name || ep.title || '';
+          const description = ep.description || '';
+          const releaseDate = ep.releaseDate || ep.publishDate;
+
+          let pubDate = null;
+          if (releaseDate) {
+            pubDate = extractDateFromText(releaseDate);
+          }
+
+          // Extract guests from description (look for "avec", "invité", etc.)
+          let author = '';
+          const guestMatch = description.match(/(?:avec|invité[s]?)[:\s]+([^.!?\n]+)/i);
+          if (guestMatch) {
+            author = guestMatch[1].trim()
+              .replace(/\s+/g, ' ')
+              .split(/\s*,\s*et\s*|\s*et\s*|\s*,\s*/)[0];
+          }
+
+          if (!author) {
+            // Try to extract from title
+            const titleMatch = title.match(/(?:avec|invité[s]?)[:\s]+([^-|]+)/i);
+            if (titleMatch) {
+              author = titleMatch[1].trim();
+            }
+          }
+
+          // Only keep episodes from last 2 weeks
+          if (pubDate && isWithinWeeks(pubDate, 2)) {
+            const episodeUrl = ep.uri ? `https://open.spotify.com/episode/${ep.uri.split(':').pop()}` : showUrl;
+
+            episodes.push({
+              title,
+              author: author || 'Invité non spécifié',
+              date: pubDate,
+              source: 'Storiavoce',
+              description: description.slice(0, 300),
+              url: episodeUrl,
+              type: 'podcast'
+            });
+          }
+        } catch (err) {
+          console.error(`  Error processing episode:`, err.message);
+        }
+      }
+    } else {
+      console.log('  Could not extract episodes from Spotify JSON data');
+      console.log('  Note: Spotify may require a browser environment to load episode data');
     }
 
     console.log(`  Found ${episodes.length} recent episodes`);
@@ -107,61 +126,104 @@ export async function scrapeStoriavoce() {
 }
 
 /**
- * Scrape OpCit
- * Format: (date), Invité - Titre
- * Pas de description
+ * Scrape OpCit depuis Spotify
+ * Colonnes: Titre, Auteur (invités), Date de parution, Source, Description, Lien
  */
 export async function scrapeOpCit() {
   try {
-    console.log('Scraping OpCit...');
-    const html = await fetchPage('https://ihmc.ens.psl.eu/-opcit-podcast-ihmc-.html');
+    console.log('Scraping OpCit from Spotify...');
+    const showUrl = 'https://open.spotify.com/show/4qyZY8ieJvMKj9tLUoLM7l';
+    const html = await fetchPage(showUrl);
     const $ = cheerio.load(html);
     const episodes = [];
 
-    // Find episode items in the list
-    $('.spip, article, .item, p, li').each((i, el) => {
-      const text = $(el).text();
+    // Try to extract JSON data from Spotify's embedded data
+    let jsonData = null;
+    $('script[type="application/ld+json"]').each((i, el) => {
+      try {
+        const content = $(el).html();
+        const data = JSON.parse(content);
+        if (data && data['@type'] === 'PodcastSeries') {
+          jsonData = data;
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    });
 
-      // Match pattern: (date), Guest - Title
-      const episodeMatch = text.match(/\(([^)]+)\),\s*([^-]+?)\s*-\s*(.+)/);
-
-      if (episodeMatch) {
-        const dateStr = episodeMatch[1].trim();
-        const guest = episodeMatch[2].trim();
-        const title = episodeMatch[3].trim();
-
-        const pubDate = extractDateFromText(dateStr);
-
-        if (pubDate && isWithinWeeks(pubDate, 2)) {
-          // Try to find Spotify link nearby
-          let spotifyLink = null;
-          $(el).find('a[href*="spotify"]').each((i, linkEl) => {
-            spotifyLink = $(linkEl).attr('href');
-          });
-
-          // Fallback: find any link in the element
-          let episodeUrl = spotifyLink;
-          if (!episodeUrl) {
-            $(el).find('a').each((i, linkEl) => {
-              const href = $(linkEl).attr('href');
-              if (href && !episodeUrl) {
-                episodeUrl = href.startsWith('http') ? href : `https://ihmc.ens.psl.eu${href}`;
-              }
-            });
+    // Try to extract from Next.js data
+    $('script').each((i, el) => {
+      const content = $(el).html();
+      if (content && content.includes('__NEXT_DATA__')) {
+        try {
+          const match = content.match(/__NEXT_DATA__\s*=\s*({.+?})\s*<\/script>/);
+          if (match) {
+            const data = JSON.parse(match[1]);
+            // Navigate through Spotify's data structure
+            if (data.props && data.props.pageProps) {
+              jsonData = data.props.pageProps;
+            }
           }
-
-          episodes.push({
-            title,
-            author: guest,
-            date: pubDate,
-            source: 'OpCit',
-            description: '', // Pas de description pour OpCit
-            url: episodeUrl || 'https://ihmc.ens.psl.eu/-opcit-podcast-ihmc-.html',
-            type: 'podcast'
-          });
+        } catch (e) {
+          // Ignore parse errors
         }
       }
     });
+
+    // If we have JSON data with episodes
+    if (jsonData && jsonData.episodes) {
+      for (const ep of jsonData.episodes.slice(0, 20)) {
+        try {
+          const title = ep.name || ep.title || '';
+          const description = ep.description || '';
+          const releaseDate = ep.releaseDate || ep.publishDate;
+
+          let pubDate = null;
+          if (releaseDate) {
+            pubDate = extractDateFromText(releaseDate);
+          }
+
+          // Extract guests from description or title
+          let author = '';
+
+          // Try pattern: "avec" or "invité"
+          const guestMatch = description.match(/(?:avec|invité[s]?)[:\s]+([^.!?\n]+)/i);
+          if (guestMatch) {
+            author = guestMatch[1].trim()
+              .replace(/\s+/g, ' ')
+              .split(/\s*,\s*et\s*|\s*et\s*|\s*,\s*/)[0];
+          }
+
+          if (!author) {
+            // Try to extract from title
+            const titleMatch = title.match(/(?:avec|invité[s]?)[:\s]+([^-|]+)/i);
+            if (titleMatch) {
+              author = titleMatch[1].trim();
+            }
+          }
+
+          // Only keep episodes from last 2 weeks
+          if (pubDate && isWithinWeeks(pubDate, 2)) {
+            const episodeUrl = ep.uri ? `https://open.spotify.com/episode/${ep.uri.split(':').pop()}` : showUrl;
+
+            episodes.push({
+              title,
+              author: author || 'Invité non spécifié',
+              date: pubDate,
+              source: 'OpCit',
+              description: description.slice(0, 300),
+              url: episodeUrl,
+              type: 'podcast'
+            });
+          }
+        } catch (err) {
+          console.error(`  Error processing episode:`, err.message);
+        }
+      }
+    } else {
+      console.log('  Could not extract episodes from Spotify JSON data');
+      console.log('  Note: Spotify may require a browser environment to load episode data');
+    }
 
     console.log(`  Found ${episodes.length} recent episodes`);
     return episodes;

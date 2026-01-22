@@ -26,27 +26,25 @@ export const SOURCES = {
   podcasts: [
     {
       name: 'Storiavoce',
-      url: 'https://storiavoce.com/',
+      url: 'https://open.spotify.com/show/3q09jBiYIJ1NGnAMYuDQeH',
       type: 'podcast',
       weeksThreshold: 2 // Only episodes from last 2 weeks
     },
     {
       name: 'OpCit',
-      url: 'https://ihmc.ens.psl.eu/-opcit-podcast-ihmc-.html',
+      url: 'https://open.spotify.com/show/4qyZY8ieJvMKj9tLUoLM7l',
       type: 'podcast',
       weeksThreshold: 2
     },
     {
       name: 'Concordance des temps',
       url: 'https://www.radiofrance.fr/franceculture/podcasts/concordance-des-temps',
-      rssUrl: 'https://radiofrance-podcast.net/podcast09/rss_10076.xml',
       type: 'podcast',
       weeksThreshold: 2
     },
     {
       name: 'Le cours de l\'histoire',
       url: 'https://www.radiofrance.fr/franceculture/podcasts/le-cours-de-l-histoire',
-      rssUrl: 'https://radiofrance-podcast.net/podcast09/rss_10076.xml',
       type: 'podcast',
       weeksThreshold: 2
     }
