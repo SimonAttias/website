@@ -172,40 +172,29 @@ export async function scrapeOpCit() {
 }
 
 /**
- * Clean Radio France description by removing show prefix
- * Example: "- Le Cours de l'histoire - par : Xavier Mauduit, Maïwenn Guiziou - Actual description"
- */
-function cleanRadioFranceDescription(desc, showName) {
-  if (!desc) return '';
-
-  // Remove patterns like "- ShowName - par : Author - " or "- ShowName -"
-  desc = desc.replace(/^-\s*[^-]+-\s*par\s*:\s*[^-]+-\s*/i, '');
-  desc = desc.replace(/^-\s*[^-]+-\s*/i, '');
-
-  return desc.trim();
-}
-
-/**
- * Scrape Radio France podcasts (Concordance des temps, Le cours de l'histoire)
+ * Scrape Concordance des temps
  * Invités : depuis "guest":[{« NOM »
- * Description : depuis <meta name="description"> en nettoyant les préfixes
+ * Description : depuis <meta name="description" content="...">
  */
-async function scrapeRadioFrance(baseUrl, podcastName) {
+export async function scrapeConcordanceDesTemps() {
   try {
-    console.log(`Scraping ${podcastName}...`);
-    const html = await fetchPage(baseUrl);
+    console.log('Scraping Concordance des temps...');
+    const html = await fetchPage('https://www.radiofrance.fr/franceculture/podcasts/concordance-des-temps');
     const $ = cheerio.load(html);
     const episodes = [];
 
     // Find episode links
     const episodeLinks = [];
-    $('a[href*="/podcasts/"]').each((i, el) => {
+    $('a[href*="/podcasts/concordance-des-temps/"]').each((i, el) => {
       let href = $(el).attr('href');
-      if (href && !episodeLinks.includes(href) && href !== baseUrl) {
+      if (href && !episodeLinks.includes(href)) {
         if (!href.startsWith('http')) {
           href = 'https://www.radiofrance.fr' + href;
         }
-        episodeLinks.push(href);
+        // Avoid base URL
+        if (!href.endsWith('/concordance-des-temps')) {
+          episodeLinks.push(href);
+        }
       }
     });
 
@@ -223,7 +212,6 @@ async function scrapeRadioFrance(baseUrl, podcastName) {
 
         // Extract description from meta tag
         let description = $ep('meta[name="description"]').attr('content') || '';
-        description = cleanRadioFranceDescription(description, podcastName);
 
         // Extract guests: look for "guest":[{« Name »
         let guests = '';
@@ -242,11 +230,100 @@ async function scrapeRadioFrance(baseUrl, podcastName) {
           }
         }
 
-        // Fallback: search for "avec" in text
+        // Extract date
+        let pubDate = null;
+        $ep('time, [datetime], .date, [class*="date"]').each((i, el) => {
+          const dateText = $ep(el).attr('datetime') || $ep(el).text();
+          pubDate = extractDateFromText(dateText);
+        });
+
+        // Only keep episodes from last 2 weeks
+        if (pubDate && isWithinWeeks(pubDate, 2)) {
+          episodes.push({
+            title,
+            author: guests || 'Invité non spécifié',
+            date: pubDate,
+            source: 'Concordance des temps',
+            description: description.slice(0, 300),
+            url: link,
+            type: 'podcast'
+          });
+        }
+      } catch (err) {
+        console.error(`  Error fetching episode ${link}:`, err.message);
+      }
+    }
+
+    console.log(`  Found ${episodes.length} recent episodes`);
+    return episodes;
+  } catch (error) {
+    console.error('Error scraping Concordance des temps:', error.message);
+    return [];
+  }
+}
+
+/**
+ * Scrape Le cours de l'histoire
+ * Invités : depuis "guest":[{« NOM »
+ * Description : depuis <meta name="description">, en retirant le préfixe "- Le Cours de l'histoire - par : ..."
+ */
+export async function scrapeLeCoursDelHistoire() {
+  try {
+    console.log('Scraping Le cours de l\'histoire...');
+    const html = await fetchPage('https://www.radiofrance.fr/franceculture/podcasts/le-cours-de-l-histoire');
+    const $ = cheerio.load(html);
+    const episodes = [];
+
+    // Find episode links
+    const episodeLinks = [];
+    $('a[href*="/podcasts/le-cours-de-l-histoire/"]').each((i, el) => {
+      let href = $(el).attr('href');
+      if (href && !episodeLinks.includes(href)) {
+        if (!href.startsWith('http')) {
+          href = 'https://www.radiofrance.fr' + href;
+        }
+        // Avoid base URL
+        if (!href.endsWith('/le-cours-de-l-histoire')) {
+          episodeLinks.push(href);
+        }
+      }
+    });
+
+    console.log(`  Found ${episodeLinks.length} episodes to check`);
+
+    // Check each episode
+    for (const link of episodeLinks.slice(0, 15)) {
+      try {
+        await delay(500);
+
+        const epHtml = await fetchPage(link);
+        const $ep = cheerio.load(epHtml);
+
+        const title = $ep('h1').first().text().trim();
+
+        // Extract description from meta tag
+        let description = $ep('meta[name="description"]').attr('content') || '';
+
+        // Clean Radio France prefix: "- Le Cours de l'histoire - par : Xavier Mauduit, Maïwenn Guiziou -"
+        description = description.replace(/^-\s*Le Cours de l'histoire\s*-\s*par\s*:\s*[^-]+-\s*/i, '');
+        description = description.replace(/^-\s*[^-]+-\s*par\s*:\s*[^-]+-\s*/i, '');
+        description = description.replace(/^-\s*[^-]+-\s*/i, '');
+        description = description.trim();
+
+        // Extract guests: look for "guest":[{« Name »
+        let guests = '';
+        const pageText = $ep('body').text();
+        const guestJsonMatch = pageText.match(/"guest":\s*\[\s*\{\s*«\s*([^»]+)\s*»/i);
+        if (guestJsonMatch) {
+          guests = guestJsonMatch[1].trim();
+        }
+
+        // Fallback: try Avec</div> ... <span class="qg-st4">
         if (!guests) {
-          const guestMatch = pageText.match(/avec\s+([^.!?\n]+)/i);
-          if (guestMatch) {
-            guests = guestMatch[1].trim().split(/\s*,\s*/)[0];
+          const bodyHtml = $ep('body').html();
+          const avecMatch = bodyHtml.match(/Avec<\/div>[\s\S]*?<span class="qg-st4">(.*?)<\/span>/i);
+          if (avecMatch) {
+            guests = avecMatch[1].trim();
           }
         }
 
@@ -263,7 +340,7 @@ async function scrapeRadioFrance(baseUrl, podcastName) {
             title,
             author: guests || 'Invité non spécifié',
             date: pubDate,
-            source: podcastName,
+            source: 'Le cours de l\'histoire',
             description: description.slice(0, 300),
             url: link,
             type: 'podcast'
@@ -277,27 +354,7 @@ async function scrapeRadioFrance(baseUrl, podcastName) {
     console.log(`  Found ${episodes.length} recent episodes`);
     return episodes;
   } catch (error) {
-    console.error(`Error scraping ${podcastName}:`, error.message);
+    console.error('Error scraping Le cours de l\'histoire:', error.message);
     return [];
   }
-}
-
-/**
- * Scrape Concordance des temps
- */
-export async function scrapeConcordanceDesTemps() {
-  return await scrapeRadioFrance(
-    'https://www.radiofrance.fr/franceculture/podcasts/concordance-des-temps',
-    'Concordance des temps'
-  );
-}
-
-/**
- * Scrape Le cours de l'histoire
- */
-export async function scrapeLeCoursDelHistoire() {
-  return await scrapeRadioFrance(
-    'https://www.radiofrance.fr/franceculture/podcasts/le-cours-de-l-histoire',
-    'Le cours de l\'histoire'
-  );
 }
