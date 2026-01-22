@@ -1,0 +1,28 @@
+{
+  "name": "history-brief",
+  "version": "1.0.0",
+  "description": "Daily historiographic news briefing system for Notion",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node index.js --test"
+  },
+  "keywords": [
+    "history",
+    "historiography",
+    "notion",
+    "scraping",
+    "brief"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "cheerio": "^1.0.0-rc.12",
+    "date-fns": "^3.0.0",
+    "dotenv": "^17.2.3",
+    "node-fetch": "^3.3.2",
+    "rss-parser": "^3.13.0"
+  }
+}
