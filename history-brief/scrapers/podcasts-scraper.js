@@ -4,7 +4,7 @@
 
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import { isWithinMonths, extractDateFromText } from '../utils/date-utils.js';
+import { isWithinWeeks, extractDateFromText } from '../utils/date-utils.js';
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
@@ -77,8 +77,8 @@ export async function scrapeStoriavoce() {
           pubDate = extractDateFromText(pageText);
         }
 
-        // Only keep episodes from last month
-        if (pubDate && isWithinMonths(pubDate, 1)) {
+        // Only keep episodes from last 2 weeks
+        if (pubDate && isWithinWeeks(pubDate, 2)) {
           episodes.push({
             title,
             author: guests || 'Invité non spécifié',
@@ -128,7 +128,7 @@ export async function scrapeOpCit() {
 
         const pubDate = extractDateFromText(dateStr);
 
-        if (pubDate && isWithinMonths(pubDate, 1)) {
+        if (pubDate && isWithinWeeks(pubDate, 2)) {
           // Try to find Spotify link nearby
           let spotifyLink = null;
           $(el).find('a[href*="spotify"]').each((i, linkEl) => {
@@ -229,8 +229,8 @@ async function scrapeRadioFrance(baseUrl, podcastName) {
           pubDate = extractDateFromText(dateText);
         });
 
-        // Only keep episodes from last month
-        if (pubDate && isWithinMonths(pubDate, 1)) {
+        // Only keep episodes from last 2 weeks
+        if (pubDate && isWithinWeeks(pubDate, 2)) {
           episodes.push({
             title,
             author: guests || 'Invité non spécifié',

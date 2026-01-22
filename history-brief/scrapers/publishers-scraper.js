@@ -78,8 +78,8 @@ export async function scrapeCNRSEditions() {
           publicationDate = extractDateFromText(bodyText);
         }
 
-        // Only keep books from last 6 months
-        if (publicationDate && isWithinMonths(publicationDate, 6)) {
+        // Only keep books from last 2 months
+        if (publicationDate && isWithinMonths(publicationDate, 2)) {
           books.push({
             title,
             author: author || 'Auteur inconnu',
@@ -153,8 +153,8 @@ export async function scrapePUF() {
           publicationDate = extractDateFromText(bodyText);
         }
 
-        // Only keep books from last 6 months
-        if (publicationDate && isWithinMonths(publicationDate, 6)) {
+        // Only keep books from last 2 months
+        if (publicationDate && isWithinMonths(publicationDate, 2)) {
           books.push({
             title,
             author: author || 'Auteur inconnu',
@@ -231,8 +231,8 @@ export async function scrapePassesComposes() {
           publicationDate = extractDateFromText(bodyText);
         }
 
-        // Only keep books from last 6 months
-        if (publicationDate && isWithinMonths(publicationDate, 6)) {
+        // Only keep books from last 2 months
+        if (publicationDate && isWithinMonths(publicationDate, 2)) {
           books.push({
             title,
             author: author || 'Auteur inconnu',

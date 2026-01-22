@@ -4,7 +4,7 @@
 aires pour la gestion des dates
  */
 
-import { subMonths, isAfter, parse, format } from 'date-fns';
+import { subMonths, subWeeks, isAfter, parse, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Mois français
@@ -76,6 +76,15 @@ export function parseFrenchDate(dateStr) {
 export function isWithinMonths(date, months) {
   if (!date) return false;
   const threshold = subMonths(new Date(), months);
+  return isAfter(date, threshold);
+}
+
+/**
+ * Vérifie si une date est dans les X dernières semaines
+ */
+export function isWithinWeeks(date, weeks) {
+  if (!date) return false;
+  const threshold = subWeeks(new Date(), weeks);
   return isAfter(date, threshold);
 }
 
