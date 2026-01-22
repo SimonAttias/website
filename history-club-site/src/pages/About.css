@@ -1,0 +1,162 @@
+.about-page {
+  min-height: 100vh;
+}
+
+.about-section {
+  padding: 4rem 2rem;
+  background-color: #fff;
+}
+
+.about-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.about-content {
+  margin-bottom: 4rem;
+}
+
+.about-content h2,
+.mission-section h2,
+.values-section h2,
+.team-section h2 {
+  font-size: 2rem;
+  margin: 0 0 1.5rem 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.about-content p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+  color: #000;
+  opacity: 0.85;
+}
+
+.mission-section {
+  margin-bottom: 4rem;
+  padding: 3rem;
+  background-color: #edddc7;
+  border-radius: 8px;
+}
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.mission-card {
+  text-align: center;
+}
+
+.mission-card h3 {
+  font-size: 1.4rem;
+  margin: 0 0 1rem 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.mission-card p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #000;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.values-section {
+  margin-bottom: 4rem;
+}
+
+.values-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.values-list li {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  background-color: #f8f8f8;
+  border-left: 4px solid #32373c;
+  border-radius: 4px;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #000;
+  opacity: 0.85;
+}
+
+.values-list strong {
+  color: #32373c;
+  font-weight: 600;
+}
+
+.team-section {
+  margin-bottom: 2rem;
+}
+
+.team-intro {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 2.5rem;
+  color: #000;
+  opacity: 0.85;
+  text-align: center;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2.5rem;
+}
+
+.team-member {
+  text-align: center;
+  padding: 2rem;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+}
+
+.member-avatar {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.team-member h3 {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.member-role {
+  font-size: 1rem;
+  color: #32373c;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.team-member p:last-child {
+  font-size: 0.95rem;
+  margin: 0;
+  color: #000;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .about-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .mission-section {
+    padding: 2rem 1.5rem;
+  }
+
+  .mission-grid,
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+}

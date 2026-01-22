@@ -1,0 +1,177 @@
+.events-page {
+  min-height: 100vh;
+}
+
+.page-header {
+  background-color: #edddc7;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.page-header h1 {
+  font-size: 3rem;
+  margin: 0 0 1rem 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.page-header p {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #000;
+  opacity: 0.8;
+}
+
+.events-section {
+  padding: 4rem 2rem;
+  background-color: #fff;
+}
+
+.events-section.past-events {
+  background-color: #f8f8f8;
+}
+
+.events-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.events-container h2 {
+  font-size: 2rem;
+  margin: 0 0 2.5rem 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.events-grid {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.event-detail-card {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 2rem;
+  transition: box-shadow 0.3s;
+}
+
+.event-detail-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.event-header {
+  margin-bottom: 1.5rem;
+}
+
+.event-header h3 {
+  font-size: 1.8rem;
+  margin: 0 0 0.5rem 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.event-speaker {
+  color: #32373c;
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.event-details {
+  margin-bottom: 1.5rem;
+}
+
+.event-datetime,
+.event-location {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: #000;
+}
+
+.event-description {
+  margin: 1rem 0;
+  line-height: 1.7;
+  color: #000;
+  opacity: 0.85;
+}
+
+.event-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.event-price,
+.event-seats {
+  font-weight: 500;
+  color: #32373c;
+}
+
+.past-events-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.past-event-card {
+  background-color: #fff;
+  border-left: 4px solid #edddc7;
+  padding: 1.5rem;
+  border-radius: 4px;
+  display: flex;
+  gap: 2rem;
+}
+
+.past-event-date {
+  font-weight: 600;
+  color: #32373c;
+  min-width: 180px;
+  font-size: 0.95rem;
+}
+
+.past-event-info h3 {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.past-event-info .event-speaker {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.past-event-info p {
+  margin: 0;
+  line-height: 1.6;
+  color: #000;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .page-header {
+    padding: 3rem 1.5rem;
+  }
+
+  .events-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .past-event-card {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .past-event-date {
+    min-width: auto;
+  }
+}
