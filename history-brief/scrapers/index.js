@@ -2,49 +2,53 @@
  * Orchestrateur de scraping
  */
 
-import { SOURCES } from '../config/sources.js';
-import { scrapeRSS } from './rss-scraper.js';
 import {
-  scrapePassesComposes,
-  scrapePUF,
   scrapeCNRSEditions,
-  scrapeEHESS
-} from './html-scraper.js';
+  scrapePUF,
+  scrapePassesComposes
+} from './publishers-scraper.js';
+
+import {
+  scrapeStoriavoce,
+  scrapeOpCit,
+  scrapeConcordanceDesTemps,
+  scrapeLeCoursDelHistoire
+} from './podcasts-scraper.js';
 
 /**
  * Scrape toutes les sources
  */
 export async function scrapeAll() {
-  console.log('\n🔍 Début du scraping...\n');
+  console.log('\nDébut du scraping...\n');
   const allItems = [];
 
-  // Scrape les podcasts (RSS)
-  for (const podcast of SOURCES.podcasts) {
-    const items = await scrapeRSS(podcast);
-    allItems.push(...items);
-  }
+  // Scrape publishers (6 months threshold)
+  console.log('=== MAISONS D\'ÉDITION ===\n');
 
-  // Scrape CNRS (RSS)
-  const cnrsSource = SOURCES.institutions.find(s => s.name === 'CNRS');
-  if (cnrsSource && cnrsSource.rssUrl) {
-    const items = await scrapeRSS(cnrsSource);
-    allItems.push(...items);
-  }
-
-  // Scrape les maisons d'édition (HTML)
-  const passesComposesItems = await scrapePassesComposes();
-  allItems.push(...passesComposesItems);
+  const cnrsItems = await scrapeCNRSEditions();
+  allItems.push(...cnrsItems);
 
   const pufItems = await scrapePUF();
   allItems.push(...pufItems);
 
-  const cnrsEditionsItems = await scrapeCNRSEditions();
-  allItems.push(...cnrsEditionsItems);
+  const passesComposesItems = await scrapePassesComposes();
+  allItems.push(...passesComposesItems);
 
-  // Scrape EHESS (HTML)
-  const ehessItems = await scrapeEHESS();
-  allItems.push(...ehessItems);
+  // Scrape podcasts (1 month threshold)
+  console.log('\n=== PODCASTS ===\n');
 
-  console.log(`\n✅ Total: ${allItems.length} éléments collectés\n`);
+  const storiavoceItems = await scrapeStoriavoce();
+  allItems.push(...storiavoceItems);
+
+  const opcitItems = await scrapeOpCit();
+  allItems.push(...opcitItems);
+
+  const concordanceItems = await scrapeConcordanceDesTemps();
+  allItems.push(...concordanceItems);
+
+  const coursHistoireItems = await scrapeLeCoursDelHistoire();
+  allItems.push(...coursHistoireItems);
+
+  console.log(`\nTotal: ${allItems.length} éléments collectés\n`);
   return allItems;
 }

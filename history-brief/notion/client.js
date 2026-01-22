@@ -5,27 +5,31 @@
 import { Client } from '@notionhq/client';
 import { NOTION_CONFIG } from '../config/notion.js';
 import { format } from 'date-fns';
+import { getTodayFormatted } from '../utils/date-utils.js';
 
 const notion = new Client({ auth: NOTION_CONFIG.token });
 
 /**
- * Trouve ou crée la base de données dans la page parent
+ * Créer ou trouver la page du brief du jour
  */
 export async function getOrCreateDatabase() {
   try {
-    // Rechercher une base de données existante
+    const todayTitle = `📋 Brief du ${getTodayFormatted()}`;
+    console.log(`Recherche ou création de la page: ${todayTitle}`);
+
+    // Search for today's database
     const response = await notion.search({
       filter: { property: 'object', value: 'database' },
-      query: NOTION_CONFIG.databaseName
+      query: todayTitle
     });
 
     if (response.results.length > 0) {
-      console.log('✓ Base de données trouvée');
+      console.log('Base de données du jour trouvée');
       return response.results[0].id;
     }
 
-    // Créer une nouvelle base de données
-    console.log('📝 Création de la base de données...');
+    // Create new database for today
+    console.log('Création de la base de données du jour...');
     const database = await notion.databases.create({
       parent: {
         type: 'page_id',
@@ -34,16 +38,18 @@ export async function getOrCreateDatabase() {
       title: [
         {
           type: 'text',
-          text: { content: NOTION_CONFIG.databaseName }
+          text: { content: todayTitle }
         }
       ],
-      icon: {
-        type: 'emoji',
-        emoji: '📚'
-      },
       properties: {
         'Titre': {
           title: {}
+        },
+        'Auteur': {
+          rich_text: {}
+        },
+        'Date de parution': {
+          date: {}
         },
         'Source': {
           select: {
@@ -52,49 +58,25 @@ export async function getOrCreateDatabase() {
               { name: 'PUF', color: 'purple' },
               { name: 'CNRS Éditions', color: 'pink' },
               { name: 'Storiavoce', color: 'orange' },
-              { name: 'OpCit!', color: 'yellow' },
-              { name: 'EHESS', color: 'green' },
-              { name: 'CNRS', color: 'red' }
+              { name: 'OpCit', color: 'yellow' },
+              { name: 'Concordance des temps', color: 'green' },
+              { name: 'Le cours de l\'histoire', color: 'red' }
             ]
           }
-        },
-        'Catégorie': {
-          select: {
-            options: [
-              { name: 'Maison d\'édition', color: 'blue' },
-              { name: 'Podcast', color: 'orange' },
-              { name: 'Établissement', color: 'green' }
-            ]
-          }
-        },
-        'Type': {
-          select: {
-            options: [
-              { name: 'publisher', color: 'blue' },
-              { name: 'podcast', color: 'orange' },
-              { name: 'institution', color: 'green' }
-            ]
-          }
-        },
-        'Lien': {
-          url: {}
         },
         'Description': {
           rich_text: {}
         },
-        'Date': {
-          date: {}
-        },
-        'Ajouté le': {
-          created_time: {}
+        'Lien': {
+          url: {}
         }
       }
     });
 
-    console.log('✅ Base de données créée avec succès');
+    console.log('Base de données créée avec succès');
     return database.id;
   } catch (error) {
-    console.error('❌ Erreur lors de la création/récupération de la base:', error.message);
+    console.error('Erreur lors de la création/récupération de la base:', error.message);
     throw error;
   }
 }
@@ -103,7 +85,7 @@ export async function getOrCreateDatabase() {
  * Ajoute des items à la base de données
  */
 export async function addItems(databaseId, items) {
-  console.log(`\n📤 Ajout de ${items.length} éléments à Notion...\n`);
+  console.log(`\nAjout de ${items.length} éléments à Notion...\n`);
 
   let successCount = 0;
   let errorCount = 0;
@@ -112,10 +94,6 @@ export async function addItems(databaseId, items) {
     try {
       await notion.pages.create({
         parent: { database_id: databaseId },
-        icon: {
-          type: 'emoji',
-          emoji: getCategoryEmoji(item.category)
-        },
         properties: {
           'Titre': {
             title: [
@@ -124,53 +102,42 @@ export async function addItems(databaseId, items) {
               }
             ]
           },
+          'Auteur': {
+            rich_text: [
+              {
+                text: { content: (item.author || '').slice(0, 2000) }
+              }
+            ]
+          },
+          'Date de parution': {
+            date: item.date ? {
+              start: format(new Date(item.date), 'yyyy-MM-dd')
+            } : null
+          },
           'Source': {
             select: { name: item.source }
-          },
-          'Catégorie': {
-            select: { name: item.category }
-          },
-          'Type': {
-            select: { name: item.type }
-          },
-          'Lien': {
-            url: item.url
           },
           'Description': {
             rich_text: [
               {
-                text: { content: item.description.slice(0, 2000) }
+                text: { content: (item.description || '').slice(0, 2000) }
               }
             ]
           },
-          'Date': {
-            date: {
-              start: item.date ? format(new Date(item.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
-            }
+          'Lien': {
+            url: item.url
           }
         }
       });
 
       successCount++;
-      console.log(`  ✓ ${item.source}: ${item.title.slice(0, 60)}...`);
+      console.log(`  ${item.source}: ${item.title.slice(0, 60)}...`);
     } catch (error) {
       errorCount++;
-      console.error(`  ✗ Erreur pour "${item.title.slice(0, 40)}":`, error.message);
+      console.error(`  Erreur pour "${item.title.slice(0, 40)}":`, error.message);
     }
   }
 
-  console.log(`\n📊 Résultats: ${successCount} réussis, ${errorCount} erreurs\n`);
+  console.log(`\nRésultats: ${successCount} réussis, ${errorCount} erreurs\n`);
   return { successCount, errorCount };
-}
-
-/**
- * Retourne un emoji selon la catégorie
- */
-function getCategoryEmoji(category) {
-  const emojis = {
-    'Maison d\'édition': '📕',
-    'Podcast': '🎙️',
-    'Établissement': '🏛️'
-  };
-  return emojis[category] || '📄';
 }
