@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Histoire Digest - Revue journalière de l'actualité historiographique
- * Collecte les nouveautés des maisons d'édition, podcasts et établissements
- * et les envoie dans une base de données Notion élégante
+ * History Brief - Daily historiographic news briefing
+ * Collects latest publications from publishers, podcasts and research institutions
+ * and sends them to an elegant Notion database
  */
 
 import 'dotenv/config';
@@ -15,7 +15,7 @@ import { filterNewItems } from './utils/storage.js';
  */
 async function main() {
   console.log('╔════════════════════════════════════════════════╗');
-  console.log('║   📚 Histoire Digest - Actualité Historique   ║');
+  console.log('║      📚 History Brief - Daily Briefing       ║');
   console.log('╚════════════════════════════════════════════════╝');
   console.log('');
 

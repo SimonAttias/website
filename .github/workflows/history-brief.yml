@@ -1,0 +1,46 @@
+name: History Brief - Daily Briefing
+
+on:
+  # Daily execution at 8:00 UTC (9:00 CET / 10:00 CEST)
+  schedule:
+    - cron: '0 8 * * *'
+
+  # Allow manual execution
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: claude/history-news-digest-39YCH
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: history-brief/package-lock.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./history-brief
+        run: npm ci
+
+      - name: 🔍 Run History Brief
+        working-directory: ./history-brief
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_PARENT_PAGE_ID: ${{ secrets.NOTION_PARENT_PAGE_ID }}
+        run: npm start
+
+      - name: 💾 Commit seen items (if changed)
+        working-directory: ./history-brief
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/seen.json || true
+          git diff --quiet && git diff --staged --quiet || git commit -m "📚 Update seen items - $(date +'%Y-%m-%d')"
+          git push || true

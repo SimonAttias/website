@@ -1,7 +1,7 @@
 {
-  "name": "histoire-digest",
+  "name": "history-brief",
   "version": "1.0.0",
-  "description": "Système de revue journalière de l'actualité historiographique pour Notion",
+  "description": "Daily historiographic news briefing system for Notion",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -9,11 +9,11 @@
     "test": "node index.js --test"
   },
   "keywords": [
-    "histoire",
-    "historiographie",
+    "history",
+    "historiography",
     "notion",
     "scraping",
-    "digest"
+    "brief"
   ],
   "author": "",
   "license": "MIT",

@@ -1,4 +1,4 @@
-# 🚀 Guide de configuration - Histoire Digest
+# 🚀 Guide de configuration - History Brief
 
 ## 📋 Prérequis
 
@@ -16,7 +16,7 @@ Pour que GitHub Actions puisse accéder à votre Notion, vous devez configurer d
 
 1. Allez sur https://www.notion.so/my-integrations
 2. Cliquez sur **"+ New integration"**
-3. Donnez un nom : `Histoire Digest`
+3. Donnez un nom : `History Brief`
 4. Sélectionnez votre workspace
 5. Copiez le **Internal Integration Token** (commence par `secret_...`)
 
@@ -25,7 +25,7 @@ Pour que GitHub Actions puisse accéder à votre Notion, vous devez configurer d
 1. Ouvrez votre page **"Neastoria"** dans Notion
 2. Cliquez sur **"..."** (en haut à droite)
 3. Allez dans **"Connections"**
-4. Recherchez et ajoutez **"Histoire Digest"**
+4. Recherchez et ajoutez **"History Brief"**
 
 ### 3. Configurer les secrets GitHub
 
@@ -51,7 +51,7 @@ Pour que GitHub Actions puisse accéder à votre Notion, vous devez configurer d
 ### Test en local
 
 ```bash
-cd histoire-digest
+cd history-brief
 npm install
 npm start
 ```
@@ -60,7 +60,7 @@ npm start
 
 1. Allez sur votre repository GitHub
 2. Cliquez sur **Actions**
-3. Sélectionnez **"Histoire Digest - Revue Quotidienne"**
+3. Sélectionnez **"History Brief - Revue Quotidienne"**
 4. Cliquez sur **"Run workflow"** → **"Run workflow"**
 5. Attendez quelques minutes et vérifiez les logs
 
@@ -84,7 +84,7 @@ Après la première exécution, vous verrez :
 
 ### Modifier l'heure d'exécution
 
-Éditez `.github/workflows/histoire-digest.yml` :
+Éditez `.github/workflows/history-brief.yml` :
 
 ```yaml
 schedule:

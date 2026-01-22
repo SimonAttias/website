@@ -7,7 +7,7 @@
 export const NOTION_CONFIG = {
   token: process.env.NOTION_TOKEN,
   parentPageId: process.env.NOTION_PARENT_PAGE_ID,
-  databaseName: 'Actualité Historiographique'
+  databaseName: 'History Brief'
 };
 
 if (!NOTION_CONFIG.token || !NOTION_CONFIG.parentPageId) {
