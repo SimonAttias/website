@@ -24,20 +24,20 @@ async function main() {
     const allItems = await scrapeAll();
 
     if (allItems.length === 0) {
-      console.log('ℹ️  Aucun nouvel élément trouvé aujourd\'hui.');
+      console.log('Aucun nouvel élément trouvé aujourd\'hui.');
       return;
     }
 
     // 2. Filtrer les nouveaux éléments (éviter doublons)
-    console.log('🔍 Filtrage des nouveaux éléments...');
+    console.log('Filtrage des nouveaux éléments...');
     const newItems = await filterNewItems(allItems);
 
     if (newItems.length === 0) {
-      console.log('ℹ️  Tous les éléments ont déjà été ajoutés précédemment.');
+      console.log('Tous les éléments ont déjà été ajoutés précédemment.');
       return;
     }
 
-    console.log(`✅ ${newItems.length} nouveaux éléments à ajouter\n`);
+    console.log(`${newItems.length} nouveaux éléments à ajouter\n`);
 
     // 3. Obtenir ou créer la base de données Notion
     const databaseId = await getOrCreateDatabase();
@@ -46,12 +46,12 @@ async function main() {
     const results = await addItems(databaseId, newItems);
 
     console.log('╔════════════════════════════════════════════════╗');
-    console.log('║                  ✨ TERMINÉ ✨                 ║');
+    console.log('║                    TERMINÉ                     ║');
     console.log('╚════════════════════════════════════════════════╝');
-    console.log(`\n📊 ${results.successCount} éléments ajoutés avec succès !`);
+    console.log(`\n${results.successCount} éléments ajoutés avec succès !`);
 
     if (results.errorCount > 0) {
-      console.log(`⚠️  ${results.errorCount} erreurs rencontrées`);
+      console.log(`${results.errorCount} erreurs rencontrées`);
     }
 
   } catch (error) {

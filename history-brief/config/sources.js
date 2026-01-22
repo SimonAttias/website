@@ -6,52 +6,49 @@ export const SOURCES = {
   publishers: [
     {
       name: 'Passés Composés',
-      url: 'https://passes-composes.com/',
+      url: 'https://passes-composes.com/catalogue?nouveaute=true',
       type: 'publisher',
-      category: 'Maison d\'édition'
+      monthsThreshold: 6 // Only books from last 6 months
     },
     {
       name: 'PUF',
-      url: 'https://www.puf.com/actualites',
+      url: 'https://www.puf.com/disciplines/histoire-et-art',
       type: 'publisher',
-      category: 'Maison d\'édition'
+      monthsThreshold: 6
     },
     {
       name: 'CNRS Éditions',
-      url: 'https://www.cnrseditions.fr/actualites/',
+      url: 'https://www.cnrseditions.fr/discipline/histoire/',
       type: 'publisher',
-      category: 'Maison d\'édition'
+      monthsThreshold: 6
     }
   ],
   podcasts: [
     {
       name: 'Storiavoce',
       url: 'https://storiavoce.com/',
-      rssUrl: 'https://feeds.acast.com/public/shows/storiavoce-un-podcast-dhistoire-civilisations',
       type: 'podcast',
-      category: 'Podcast'
+      monthsThreshold: 1 // Only episodes from last month
     },
     {
-      name: 'OpCit!',
-      url: 'https://opcit-ihmc.lepodcast.fr/',
-      rssUrl: 'https://opcit-ihmc.lepodcast.fr/rss',
+      name: 'OpCit',
+      url: 'https://ihmc.ens.psl.eu/-opcit-podcast-ihmc-.html',
       type: 'podcast',
-      category: 'Podcast'
-    }
-  ],
-  institutions: [
-    {
-      name: 'EHESS',
-      url: 'https://www.ehess.fr/fr',
-      type: 'institution',
-      category: 'Établissement'
+      monthsThreshold: 1
     },
     {
-      name: 'CNRS',
-      url: 'https://lejournal.cnrs.fr/',
-      rssUrl: 'https://lejournal.cnrs.fr/rss',
-      type: 'institution',
-      category: 'Établissement'
+      name: 'Concordance des temps',
+      url: 'https://www.radiofrance.fr/franceculture/podcasts/concordance-des-temps',
+      rssUrl: 'https://radiofrance-podcast.net/podcast09/rss_10076.xml',
+      type: 'podcast',
+      monthsThreshold: 1
+    },
+    {
+      name: 'Le cours de l\'histoire',
+      url: 'https://www.radiofrance.fr/franceculture/podcasts/le-cours-de-l-histoire',
+      rssUrl: 'https://radiofrance-podcast.net/podcast09/rss_10076.xml',
+      type: 'podcast',
+      monthsThreshold: 1
     }
   ]
 };
@@ -59,7 +56,6 @@ export const SOURCES = {
 export const getAllSources = () => {
   return [
     ...SOURCES.publishers,
-    ...SOURCES.podcasts,
-    ...SOURCES.institutions
+    ...SOURCES.podcasts
   ];
 };
