@@ -1,5 +1,5 @@
 /**
- * Scrapers pour les podcasts avec extraction précise des invités
+ * Scrapers pour les podcasts avec extraction précise des invités et descriptions
  */
 
 import fetch from 'node-fetch';
@@ -21,7 +21,8 @@ async function fetchPage(url) {
 
 /**
  * Scrape Storiavoce
- * Invités : après "avec" dans le contenu de la page
+ * Invités : après "avec" dans le contenu
+ * Description : depuis <meta property="og:description"> ou <meta property="twitter:description">
  */
 export async function scrapeStoriavoce() {
   try {
@@ -53,7 +54,11 @@ export async function scrapeStoriavoce() {
         const $ep = cheerio.load(epHtml);
 
         const title = $ep('h1').first().text().trim();
-        const description = $ep('.description, .resume, .content, article p').first().text().trim();
+
+        // Extract description from meta tags
+        let description = $ep('meta[property="og:description"]').attr('content') ||
+                         $ep('meta[property="twitter:description"]').attr('content') || '';
+        description = description.trim();
 
         // Extract guests: search for "avec" in full page content
         let guests = '';
@@ -61,8 +66,8 @@ export async function scrapeStoriavoce() {
         const guestMatch = pageText.match(/avec\s+([^.!?\n]+)/i);
         if (guestMatch) {
           guests = guestMatch[1].trim()
-            .replace(/\s+/g, ' ') // normalize spaces
-            .split(/\s*,\s*et\s*|\s*et\s*|\s*,\s*/)[0]; // take first guest if multiple
+            .replace(/\s+/g, ' ')
+            .split(/\s*,\s*et\s*|\s*et\s*|\s*,\s*/)[0];
         }
 
         // Extract date
@@ -72,7 +77,6 @@ export async function scrapeStoriavoce() {
           pubDate = extractDateFromText(dateText);
         });
 
-        // Fallback: search in page text
         if (!pubDate) {
           pubDate = extractDateFromText(pageText);
         }
@@ -105,7 +109,7 @@ export async function scrapeStoriavoce() {
 /**
  * Scrape OpCit
  * Format: (date), Invité - Titre
- * Invité : entre ", " et " - "
+ * Pas de description
  */
 export async function scrapeOpCit() {
   try {
@@ -151,7 +155,7 @@ export async function scrapeOpCit() {
             author: guest,
             date: pubDate,
             source: 'OpCit',
-            description: text.slice(0, 300),
+            description: '', // Pas de description pour OpCit
             url: episodeUrl || 'https://ihmc.ens.psl.eu/-opcit-podcast-ihmc-.html',
             type: 'podcast'
           });
@@ -168,8 +172,23 @@ export async function scrapeOpCit() {
 }
 
 /**
+ * Clean Radio France description by removing show prefix
+ * Example: "- Le Cours de l'histoire - par : Xavier Mauduit, Maïwenn Guiziou - Actual description"
+ */
+function cleanRadioFranceDescription(desc, showName) {
+  if (!desc) return '';
+
+  // Remove patterns like "- ShowName - par : Author - " or "- ShowName -"
+  desc = desc.replace(/^-\s*[^-]+-\s*par\s*:\s*[^-]+-\s*/i, '');
+  desc = desc.replace(/^-\s*[^-]+-\s*/i, '');
+
+  return desc.trim();
+}
+
+/**
  * Scrape Radio France podcasts (Concordance des temps, Le cours de l'histoire)
- * Invités : <span class="qg-st4"> après <div>Avec</div>
+ * Invités : depuis "guest":[{« NOM »
+ * Description : depuis <meta name="description"> en nettoyant les préfixes
  */
 async function scrapeRadioFrance(baseUrl, podcastName) {
   try {
@@ -201,21 +220,30 @@ async function scrapeRadioFrance(baseUrl, podcastName) {
         const $ep = cheerio.load(epHtml);
 
         const title = $ep('h1').first().text().trim();
-        const description = $ep('p.description, .description, [class*="description"]').first().text().trim();
 
-        // Extract guests: look for "Avec" div followed by span.qg-st4
+        // Extract description from meta tag
+        let description = $ep('meta[name="description"]').attr('content') || '';
+        description = cleanRadioFranceDescription(description, podcastName);
+
+        // Extract guests: look for "guest":[{« Name »
         let guests = '';
-        const bodyHtml = $ep('body').html();
+        const pageText = $ep('body').text();
+        const guestJsonMatch = pageText.match(/"guest":\s*\[\s*\{\s*«\s*([^»]+)\s*»/i);
+        if (guestJsonMatch) {
+          guests = guestJsonMatch[1].trim();
+        }
 
-        // Try to find pattern: Avec</div> ... <span class="qg-st4">Guest Name</span>
-        const avecMatch = bodyHtml.match(/Avec<\/div>[\s\S]*?<span class="qg-st4">(.*?)<\/span>/i);
-        if (avecMatch) {
-          guests = avecMatch[1].trim();
+        // Fallback: try Avec</div> ... <span class="qg-st4">
+        if (!guests) {
+          const bodyHtml = $ep('body').html();
+          const avecMatch = bodyHtml.match(/Avec<\/div>[\s\S]*?<span class="qg-st4">(.*?)<\/span>/i);
+          if (avecMatch) {
+            guests = avecMatch[1].trim();
+          }
         }
 
         // Fallback: search for "avec" in text
         if (!guests) {
-          const pageText = $ep('body').text();
           const guestMatch = pageText.match(/avec\s+([^.!?\n]+)/i);
           if (guestMatch) {
             guests = guestMatch[1].trim().split(/\s*,\s*/)[0];
